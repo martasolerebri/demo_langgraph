@@ -102,8 +102,15 @@ def build_graph(gemini_api_key: str, tavily_api_key: str):
 
     return workflow.compile()
 
+def local_css(file_name):
+    with open(file_name) as f:
+        st.markdown(f"<style>{f.read()}</style>", unsafe_allow_html=True)
+
 def main():
     st.set_page_config(page_title="AI News Writer", page_icon="📰", layout="centered")
+
+    local_css("style.css")
+
     st.title("📰 AI News Writer Agent")
     st.markdown("This agent searches the web, creates an outline, and writes a complete article in English using **LangGraph**.")
 
