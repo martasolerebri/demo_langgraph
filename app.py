@@ -60,17 +60,24 @@ def should_search(state) -> Literal["tools", "outliner"]:
 
 def message_text(message) -> str:
     content = getattr(message, "content", "")
+    
     if isinstance(content, str):
-        return content.strip()
-    if isinstance(content, list):
+        text = content.strip()
+    elif isinstance(content, list):
         text_parts = []
         for item in content:
             if isinstance(item, dict) and item.get("type") == "text":
                 text_parts.append(str(item.get("text", "")))
             elif isinstance(item, str):
                 text_parts.append(item)
-        return "\n".join(part for part in text_parts if part).strip()
-    return str(content).strip()
+        text = "\n".join(part for part in text_parts if part).strip()
+    else:
+        text = str(content).strip()
+
+    text = text.replace("\\n", "\n")
+
+    return text
+
 
 @st.cache_resource(show_spinner=False)
 def build_graph(gemini_api_key: str, tavily_api_key: str):
@@ -126,7 +133,6 @@ def main():
         if st.button("Reset App", use_container_width=True):
             st.rerun()
 
-    # --- PANTALLA DE INICIO ---
     if not gemini_api_key.strip() or not tavily_api_key.strip():
         st.markdown("""
         This agent is an automated research and writing assistant powered by **LangGraph**. Give it a topic, and it will autonomously search the web, draft an outline, and write a complete, structured news article.
