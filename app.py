@@ -112,7 +112,7 @@ def main():
     local_css("style.css")
 
     st.title("AI News Writer Agent")
-    st.markdown("This agent searches the web, creates an outline, and writes a complete article in English using **LangGraph**.")
+    st.markdown("This agent searches the web, creates an outline, and writes a complete news article in English.")
 
     with st.sidebar:
         st.header("API Configuration")
