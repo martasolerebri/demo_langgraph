@@ -1,11 +1,5 @@
 .stApp {
-    background: linear-gradient(135deg, #f5f7fa 0%, #e8ecf1 100%) !important;
-}
-
-@media (prefers-color-scheme: dark) {
-    .stApp {
-        background: linear-gradient(135deg, #1e2433 0%, #252b3b 100%) !important;
-    }
+    background: linear-gradient(135deg, #1e2433 0%, #252b3b 100%) !important;
 }
 
 .stButton > button {
