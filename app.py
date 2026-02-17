@@ -103,8 +103,11 @@ def build_graph(gemini_api_key: str, tavily_api_key: str):
     return workflow.compile()
 
 def local_css(file_name):
-    with open(file_name) as f:
-        st.markdown(f"<style>{f.read()}</style>", unsafe_allow_html=True)
+    try:
+        with open(file_name) as f:
+            st.markdown(f"<style>{f.read()}</style>", unsafe_allow_html=True)
+    except FileNotFoundError:
+        pass
 
 def main():
     st.set_page_config(page_title="AI News Writer", page_icon="📰", layout="centered")
@@ -112,20 +115,35 @@ def main():
     local_css("style.css")
 
     st.title("AI News Writer Agent")
-    st.markdown("This agent searches the web, creates an outline, and writes a complete news article in English.")
-
+    
     with st.sidebar:
         st.header("API Configuration")
         gemini_api_key = st.text_input("Gemini API Key", type="password")
         tavily_api_key = st.text_input("Tavily API Key", type="password")
         st.markdown("Get your keys at [Google AI Studio](https://aistudio.google.com/) and [Tavily](https://tavily.com/).")
+        
+        st.divider()
+        if st.button("Reset App", use_container_width=True):
+            st.rerun()
 
+    # --- PANTALLA DE INICIO ---
+    if not gemini_api_key.strip() or not tavily_api_key.strip():
+        st.markdown("""
+        This agent is an automated research and writing assistant powered by **LangGraph**. Give it a topic, and it will autonomously search the web, draft an outline, and write a complete, structured news article.
+        
+        **How the workflow operates:**
+        * **Search Node:** Uses Tavily to scour the web for the latest, most relevant news on your topic.
+        * **Outliner Node:** Processes the search results to create a well-structured article outline.
+        * **Writer Node:** Drafts the final, full-length article based on the outline.
+
+        **To get started:**
+        Please enter both your **Gemini** and **Tavily API Keys** in the sidebar.
+        """)
+
+    st.markdown("This agent searches the web, creates an outline, and writes a complete news article in English.")
     user_prompt = st.text_area("What should the article be about?", placeholder="e.g., The latest trends in Artificial Intelligence in 2026...")
 
     if st.button("Generate Article"):
-        if not gemini_api_key.strip() or not tavily_api_key.strip():
-            st.error("Please enter both API Keys in the sidebar to continue.")
-            return
         if not user_prompt.strip():
             st.warning("Please enter a topic for the article.")
             return
