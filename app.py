@@ -135,18 +135,22 @@ def main():
 
     if not gemini_api_key.strip() or not tavily_api_key.strip():
         st.markdown("""
-        ### Welcome to the AI News Assistant
-        This agent is an automated research and writing assistant powered by **LangGraph**. 
-        Give it a topic, and it will autonomously search the web, draft an outline, and write a complete, structured news article.
-        
-        **How the workflow operates:**
-        * **Search Node:** Uses Tavily to scour the web for the latest, most relevant news on your topic.
-        * **Outliner Node:** Processes the search results to create a well-structured article outline.
-        * **Writer Node:** Drafts the final, full-length article based on the outline.
+        This agent is an automated research and writing assistant powered by **LangGraph**. Give it a topic, and it will autonomously search the web, draft an outline, and write a complete, structured news article.
 
-        ---
-        ### To get started:
-        Please enter both your **Gemini** and **Tavily API Keys** in the sidebar to unlock the writer.
+
+**How the workflow operates:**
+
+* **Search Node:** Uses Tavily to scour the web for the latest, most relevant news on your topic.
+
+* **Outliner Node:** Processes the search results to create a well-structured article outline.
+
+* **Writer Node:** Drafts the final, full-length article based on the outline.
+
+
+
+**To get started:**
+
+Please enter both your **Gemini** and **Tavily API Keys** in the sidebar.
         """)
     
     else:
