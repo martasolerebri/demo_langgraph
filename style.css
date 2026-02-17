@@ -1,5 +1,11 @@
 .stApp {
-    background: linear-gradient(135deg, #1e2433 0%, #252b3b 100%) !important;
+    background: linear-gradient(135deg, #f5f7fa 0%, #e8ecf1 100%) !important;
+}
+
+@media (prefers-color-scheme: dark) {
+    .stApp {
+        background: linear-gradient(135deg, #1e2433 0%, #252b3b 100%) !important;
+    }
 }
 
 .stButton > button {
@@ -26,24 +32,39 @@
 }
 
 [data-testid="stSidebar"] {
-    background: rgba(26, 31, 45, 0.98) !important;
+    background: rgba(255, 255, 255, 0.95) !important;
     backdrop-filter: blur(10px) !important;
-    border-right: 1px solid rgba(60, 65, 82, 0.5) !important;
-    box-shadow: 4px 0 20px rgba(0, 0, 0, 0.3) !important;
+    border-right: 1px solid rgba(226, 232, 240, 0.8) !important;
+    box-shadow: 4px 0 20px rgba(0, 0, 0, 0.05) !important;
+}
+
+@media (prefers-color-scheme: dark) {
+    [data-testid="stSidebar"] {
+        background: rgba(26, 31, 45, 0.98) !important;
+        border-right: 1px solid rgba(60, 65, 82, 0.5) !important;
+        box-shadow: 4px 0 20px rgba(0, 0, 0, 0.3) !important;
+    }
 }
 
 [data-testid="stChatMessage"][aria-label="user"] {
-    background: linear-gradient(135deg, #374259 0%, #2d3548 100%) !important;
+    background: linear-gradient(135deg, #e0e7ff 0%, #d4e0ff 100%) !important;
     border-radius: 16px !important;
     padding: 1.5rem !important;
     margin-bottom: 1rem !important;
-    border: 1px solid rgba(102, 126, 234, 0.25) !important;
+    border: 1px solid rgba(199, 210, 254, 0.6) !important;
     box-shadow: 0 2px 10px rgba(79, 70, 229, 0.08) !important;
     transition: transform 0.2s ease !important;
 }
 
-[data-testid="stChatMessage"][aria-label="user"] * {
-    color: #e5e7eb !important;
+@media (prefers-color-scheme: dark) {
+    [data-testid="stChatMessage"][aria-label="user"] {
+        background: linear-gradient(135deg, #374259 0%, #2d3548 100%) !important;
+        border: 1px solid rgba(102, 126, 234, 0.25) !important;
+    }
+    
+    [data-testid="stChatMessage"][aria-label="user"] * {
+        color: #e5e7eb !important;
+    }
 }
 
 [data-testid="stChatMessage"][aria-label="user"]:hover {
@@ -51,30 +72,42 @@
 }
 
 [data-testid="stChatMessage"][aria-label="assistant"] {
-    background: #2a303f !important;
+    background: #ffffff !important;
     border-radius: 16px !important;
     padding: 1.5rem !important;
     margin-bottom: 1rem !important;
-    border: 1px solid #3a4153 !important;
-    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.4) !important;
+    border: 1px solid #e5e7eb !important;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.04) !important;
     transition: all 0.2s ease !important;
 }
 
-[data-testid="stChatMessage"][aria-label="assistant"] * {
-    color: #e5e7eb !important;
+@media (prefers-color-scheme: dark) {
+    [data-testid="stChatMessage"][aria-label="assistant"] {
+        background: #2a303f !important;
+        border: 1px solid #3a4153 !important;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.4) !important;
+    }
+    
+    [data-testid="stChatMessage"][aria-label="assistant"] * {
+        color: #e5e7eb !important;
+    }
 }
 
 [data-testid="stChatMessage"][aria-label="assistant"]:hover {
-    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.6) !important;
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.08) !important;
     transform: translateY(-2px) !important;
 }
 
+@media (prefers-color-scheme: dark) {
+    [data-testid="stChatMessage"][aria-label="assistant"]:hover {
+        box-shadow: 0 6px 20px rgba(0, 0, 0, 0.6) !important;
+    }
+}
+
 .stTextInput > div > div > input,
-.stTextArea > div > div > textarea,
 input[type="text"],
 input[type="password"],
-input[type="email"],
-textarea {
+input[type="email"] {
     border-radius: 12px !important;
     border: 2px solid #3a4153 !important;
     padding: 0.75rem 1rem !important;
@@ -97,19 +130,15 @@ input[type="password"]:focus {
 }
 
 .stTextInput > div,
-.stTextInput > div > div,
-.stTextArea > div,
-.stTextArea > div > div {
+.stTextInput > div > div {
     border: none !important;
     outline: none !important;
     box-shadow: none !important;
 }
 
 .stTextInput > div > div > input:focus,
-.stTextArea > div > div > textarea:focus,
 input[type="text"]:focus,
-input[type="password"]:focus,
-textarea:focus {
+input[type="password"]:focus {
     border-color: #667eea !important;
     box-shadow: 0 0 0 4px rgba(102, 126, 234, 0.15) !important;
     outline: none !important;
@@ -118,14 +147,10 @@ textarea:focus {
 
 .stTextInput > div > div > input::before,
 .stTextInput > div > div > input::after,
-.stTextArea > div > div > textarea::before,
-.stTextArea > div > div > textarea::after,
 input[type="text"]::before,
 input[type="text"]::after,
 input[type="password"]::before,
-input[type="password"]::after,
-textarea::before,
-textarea::after {
+input[type="password"]::after {
     display: none !important;
     content: none !important;
 }
@@ -133,10 +158,17 @@ textarea::after {
 .stAlert,
 [data-testid="stAlert"],
 .element-container div[data-testid="stMarkdownContainer"] > div {
-    background: rgba(102, 126, 234, 0.15) !important;
-    border: 1px solid rgba(102, 126, 234, 0.3) !important;
-    border-radius: 12px !important;
-    color: #e5e7eb !important;
+    background: transparent !important;
+}
+
+@media (prefers-color-scheme: dark) {
+    .stAlert,
+    [data-testid="stAlert"] {
+        background: rgba(102, 126, 234, 0.15) !important;
+        border: 1px solid rgba(102, 126, 234, 0.3) !important;
+        border-radius: 12px !important;
+        color: #e5e7eb !important;
+    }
 }
 
 [data-testid="stChatInput"],
