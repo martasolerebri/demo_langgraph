@@ -135,65 +135,72 @@ def main():
 
     if not gemini_api_key.strip() or not tavily_api_key.strip():
         st.markdown("""
-        This agent is an automated research and writing assistant powered by **LangGraph**. Give it a topic, and it will autonomously search the web, draft an outline, and write a complete, structured news article.
+        ### Welcome to the AI News Assistant
+        This agent is an automated research and writing assistant powered by **LangGraph**. 
+        Give it a topic, and it will autonomously search the web, draft an outline, and write a complete, structured news article.
         
         **How the workflow operates:**
         * **Search Node:** Uses Tavily to scour the web for the latest, most relevant news on your topic.
         * **Outliner Node:** Processes the search results to create a well-structured article outline.
         * **Writer Node:** Drafts the final, full-length article based on the outline.
 
-        **To get started:**
-        Please enter both your **Gemini** and **Tavily API Keys** in the sidebar.
+        ---
+        ### To get started:
+        Please enter both your **Gemini** and **Tavily API Keys** in the sidebar to unlock the writer.
         """)
+    
+    else:
+        
+        st.markdown("This agent searches the web, creates an outline, and writes a complete news article in English.")
+        user_prompt = st.text_area(
+            "What should the article be about?", 
+            placeholder="e.g., The latest trends in Artificial Intelligence in 2026...",
+            height=150
+        )
 
-    st.markdown("This agent searches the web, creates an outline, and writes a complete news article in English.")
-    user_prompt = st.text_area("What should the article be about?", placeholder="e.g., The latest trends in Artificial Intelligence in 2026...")
+        if st.button("Generate Article", type="primary"):
+            if not user_prompt.strip():
+                st.warning("Please enter a topic for the article.")
+                return
 
-    if st.button("Generate Article"):
-        if not user_prompt.strip():
-            st.warning("Please enter a topic for the article.")
-            return
+            try:
+                with st.spinner("Researching and writing (this may take a few seconds)..."):
+                    graph = build_graph(gemini_api_key.strip(), tavily_api_key.strip())
+                    result = graph.invoke(
+                        {"messages": [HumanMessage(content=user_prompt.strip())]},
+                        config={"recursion_limit": 50},
+                    )
 
-        try:
-            with st.spinner("Researching and writing (this may take a few seconds)..."):
-                graph = build_graph(gemini_api_key.strip(), tavily_api_key.strip())
-                result = graph.invoke(
-                    {"messages": [HumanMessage(content=user_prompt.strip())]},
-                    config={"recursion_limit": 50},
-                )
-
-            messages = result.get("messages", [])
-            output_text = ""
-            
-            for msg in reversed(messages):
-                output_text = message_text(msg)
-                if output_text and ("TITLE" in output_text.upper() or "BODY" in output_text.upper()):
-                    break
-
-            if output_text:
-                clean_text = output_text.replace("**TITLE:**", "TITLE:").replace("**TITLE**:", "TITLE:")
-                clean_text = clean_text.replace("**BODY:**", "BODY:").replace("**BODY**:", "BODY:")
+                messages = result.get("messages", [])
+                output_text = ""
                 
-                if "BODY:" in clean_text:
-                    parts = clean_text.split("BODY:", 1)
-                    title_part = parts[0].replace("TITLE:", "").strip()
-                    body_part = parts[1].strip()
+                for msg in reversed(messages):
+                    output_text = message_text(msg)
+                    if output_text and ("TITLE" in output_text.upper() or "BODY" in output_text.upper()):
+                        break
+
+                if output_text:
+                    clean_text = output_text.replace("**TITLE:**", "TITLE:").replace("**TITLE**:", "TITLE:")
+                    clean_text = clean_text.replace("**BODY:**", "BODY:").replace("**BODY**:", "BODY:")
                     
-                    st.success("Article completed!")
-                    st.divider()
-                    st.header(title_part)
-                    st.markdown(body_part)
+                    if "BODY:" in clean_text:
+                        parts = clean_text.split("BODY:", 1)
+                        title_part = parts[0].replace("TITLE:", "").strip()
+                        body_part = parts[1].strip()
+                        
+                        st.success("Article completed!")
+                        st.divider()
+                        st.header(title_part)
+                        st.markdown(body_part)
+                    else:
+                        st.success("Article completed!")
+                        st.divider()
+                        st.markdown(clean_text)
                 else:
-                    st.success("Article completed!")
-                    st.divider()
-                    st.markdown(clean_text)
-            else:
-                st.error("The model returned an empty or unstructured response. Please try again.")
-                with st.expander("View debug messages"):
-                    st.write(messages)
-                    
-        except Exception as exc:
-            st.error(f"An error occurred: {exc}")
+                    st.error("The model returned an empty response. Please try again.")
+                        
+            except Exception as exc:
+                st.error(f"An error occurred: {exc}")
 
 if __name__ == "__main__":
     main()
