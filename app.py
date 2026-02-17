@@ -137,20 +137,17 @@ def main():
         st.markdown("""
         This agent is an automated research and writing assistant powered by **LangGraph**. Give it a topic, and it will autonomously search the web, draft an outline, and write a complete, structured news article.
 
+        **How the workflow operates:**
 
-**How the workflow operates:**
+        * **Search Node:** Uses Tavily to scour the web for the latest, most relevant news on your topic.
 
-* **Search Node:** Uses Tavily to scour the web for the latest, most relevant news on your topic.
+        * **Outliner Node:** Processes the search results to create a well-structured article outline.
 
-* **Outliner Node:** Processes the search results to create a well-structured article outline.
+        * **Writer Node:** Drafts the final, full-length article based on the outline.
 
-* **Writer Node:** Drafts the final, full-length article based on the outline.
+        **To get started:**
 
-
-
-**To get started:**
-
-Please enter both your **Gemini** and **Tavily API Keys** in the sidebar.
+        Please enter both your **Gemini** and **Tavily API Keys** in the sidebar.
         """)
     
     else:
