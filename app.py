@@ -184,8 +184,6 @@ def main():
                     clean_text = output_text.replace("**TITLE:**", "TITLE:").replace("**TITLE**:", "TITLE:")
                     clean_text = clean_text.replace("**BODY:**", "BODY:").replace("**BODY**:", "BODY:")
                     
-                    # Se elimina st.divider() para evitar la "barra vacía" extraña en la interfaz
-                    
                     if "BODY:" in clean_text:
                         parts = clean_text.split("BODY:", 1)
                         title_part = parts[0].replace("TITLE:", "").strip()
@@ -194,21 +192,19 @@ def main():
                         st.header(title_part)
                         st.markdown(body_part)
                         
-                        # Preparamos el texto final uniendo el título y el cuerpo
                         texto_para_descargar = f"{title_part}\n\n{body_part}"
                     else:
                         st.markdown(clean_text)
                         texto_para_descargar = clean_text
                     
-                    # Añadimos un pequeño espacio visual
                     st.write("")
                     
-                    # Añadimos el botón de descarga
                     st.download_button(
-                        label="📥 Download Article",
+                        label="Download",
                         data=texto_para_descargar,
                         file_name="generated_article.txt",
-                        mime="text/plain"
+                        mime="text/plain",
+                        type="primary"
                     )
 
                 else:
