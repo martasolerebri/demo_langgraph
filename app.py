@@ -149,10 +149,36 @@ def main():
                     title_content = title_match.group(1).split('\n')[0].replace('**', '').strip()
                     body_content = body_match.group(1).strip()
                     
+                    # 1. Limpiamos cualquier "barra rara" (líneas --- o ___) que el LLM haya añadido al final
+                    body_content = re.sub(r'\n+\s*[-_]{3,}\s*$', '', body_content).strip()
+                    
                     st.markdown(f"# {title_content}")
                     st.markdown(body_content)
+                    
+                    st.write("") # Espacio en blanco por estética
+                    
+                    # 2. Añadimos el botón de descarga
+                    st.download_button(
+                        label="📥 Descargar Artículo",
+                        data=f"# {title_content}\n\n{body_content}",
+                        file_name="articulo_generado.md",
+                        mime="text/markdown",
+                        use_container_width=True
+                    )
                 else:
+                    # En caso de que el LLM no haya respetado el formato exacto
+                    # Limpiamos también posibles barras finales
+                    output_text = re.sub(r'\n+\s*[-_]{3,}\s*$', '', output_text).strip()
                     st.markdown(output_text)
+                    
+                    st.write("")
+                    st.download_button(
+                        label="📥 Descargar Texto",
+                        data=output_text,
+                        file_name="texto_generado.md",
+                        mime="text/markdown",
+                        use_container_width=True
+                    )
             else:
                 st.error("Could not extract article. Try a different prompt.")
                     
