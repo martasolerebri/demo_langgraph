@@ -4,7 +4,6 @@ import functools
 import re
 from typing import Annotated, Literal, TypedDict
 
-# Configuración de codificación para evitar errores en entornos Windows/Docker
 os.environ["PYTHONUTF8"] = "1"
 os.environ["PYTHONIOENCODING"] = "utf-8"
 if sys.stdout.encoding != 'utf-8':
@@ -19,8 +18,6 @@ from langgraph.graph import END, StateGraph
 from langgraph.graph.message import add_messages
 from langgraph.prebuilt import ToolNode
 
-# --- DEFINICIÓN DEL ESTADO Y AGENTES ---
-
 class AgentState(TypedDict):
     messages: Annotated[list, add_messages]
 
@@ -31,8 +28,6 @@ def create_agent(llm, tools, system_message: str):
     ])
     prompt = prompt.partial(system_message=system_message)
     return prompt | llm.bind_tools(tools) if tools else prompt | llm
-
-# --- PROMPTS ---
 
 search_template = """Your job is to search the web for related news that would be relevant to generate the article described by the user.
 Do not write the article. Use Tavily search and return a plain-text summary of the key findings."""
@@ -46,8 +41,6 @@ TITLE: <write the title here>
 BODY: <write the full article here using markdown for subheaders if needed>
 
 Do not use bolding on the labels TITLE: or BODY:. Always write in ENGLISH."""
-
-# --- NODOS Y LÓGICA DEL GRAFO ---
 
 def agent_node(state, agent, name):
     result = agent.invoke(state)
@@ -94,8 +87,6 @@ def build_graph(gemini_api_key: str, tavily_api_key: str):
 
     return workflow.compile()
 
-# --- INTERFAZ STREAMLIT ---
-
 def local_css(file_name):
     try:
         with open(file_name) as f:
@@ -141,7 +132,6 @@ def main():
                     config={"recursion_limit": 50},
                 )
 
-            # Buscar el último mensaje del Writer que contenga la estructura esperada
             output_text = ""
             for msg in reversed(result.get("messages", [])):
                 text = message_text(msg)
@@ -151,9 +141,7 @@ def main():
 
             if output_text:
                 st.divider()
-                
-                # Procesamiento robusto del Título y Cuerpo
-                # Usamos regex para ignorar mayúsculas/minúsculas y asteriscos de markdown
+
                 title_match = re.search(r'(?i)TITLE:\s*(.*)', output_text)
                 body_match = re.search(r'(?i)BODY:\s*([\s\S]*)', output_text)
 
@@ -164,7 +152,6 @@ def main():
                     st.markdown(f"# {title_content}")
                     st.markdown(body_content)
                 else:
-                    # Fallback si el regex falla pero hay texto
                     st.markdown(output_text)
             else:
                 st.error("Could not extract article. Try a different prompt.")
