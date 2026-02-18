@@ -203,7 +203,8 @@ def main():
                         label="Download",
                         data=texto_para_descargar,
                         file_name="generated_article.txt",
-                        mime="text/plain"
+                        mime="text/plain",
+                        type="primary"
                     )
 
                 else:
