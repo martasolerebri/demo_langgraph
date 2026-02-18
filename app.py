@@ -10,12 +10,13 @@ if sys.stdout.encoding != 'utf-8':
 
 import streamlit as st
 from langchain_community.tools.tavily_search import TavilySearchResults
-from langchain_core.messages import HumanMessage
+from langchain_core.messages import HumanMessage, ToolMessage
 from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
 from langchain_google_genai import ChatGoogleGenerativeAI
 from langgraph.graph import END, StateGraph
 from langgraph.graph.message import add_messages
 from langgraph.prebuilt import ToolNode
+import re
 
 class AgentState(TypedDict):
     messages: Annotated[list, add_messages]
@@ -54,7 +55,8 @@ def agent_node(state, agent, name):
 def should_search(state) -> Literal["tools", "outliner"]:
     messages = state['messages']
     last_message = messages[-1]
-    if getattr(last_message, "tool_calls", None):
+    has_used_tools = any(isinstance(message, ToolMessage) for message in messages)
+    if getattr(last_message, "tool_calls", None) and not has_used_tools:
         return "tools"
     return "outliner"
 
@@ -173,23 +175,24 @@ def main():
                     )
 
                 messages = result.get("messages", [])
-                output_text = ""
-                
-                for msg in reversed(messages):
-                    output_text = message_text(msg)
-                    if output_text and ("TITLE" in output_text.upper() or "BODY" in output_text.upper()):
-                        break
+                output_text = message_text(messages[-1]) if messages else ""
+                if not output_text:
+                    for msg in reversed(messages):
+                        output_text = message_text(msg)
+                        if output_text:
+                            break
 
                 if output_text:
-                    clean_text = output_text.replace("**TITLE:**", "TITLE:").replace("**TITLE**:", "TITLE:")
+                    clean_text = output_text
+                    clean_text = clean_text.replace("**TITLE:**", "TITLE:").replace("**TITLE**:", "TITLE:")
                     clean_text = clean_text.replace("**BODY:**", "BODY:").replace("**BODY**:", "BODY:")
                     
-                    if "BODY:" in clean_text:
-                        parts = clean_text.split("BODY:", 1)
-                        title_part = parts[0].replace("TITLE:", "").strip()
-                        body_part = parts[1].strip()
+                    body_match = re.search(r"\bBODY\s*:\s*", clean_text, flags=re.IGNORECASE)
+                    if body_match:
+                        title_part = re.sub(r"(?i)\bTITLE\s*:\s*", "", clean_text[:body_match.start()]).strip()
+                        body_part = clean_text[body_match.end():].strip()
                         
-                        st.header(title_part)
+                        st.header(title_part or "Generated Article")
                         st.markdown(body_part)
                         
                     else:
