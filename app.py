@@ -184,16 +184,16 @@ def main():
                     clean_text = output_text.replace("**TITLE:**", "TITLE:").replace("**TITLE**:", "TITLE:")
                     clean_text = clean_text.replace("**BODY:**", "BODY:").replace("**BODY**:", "BODY:")
                     
+                    st.divider() 
+                    
                     if "BODY:" in clean_text:
                         parts = clean_text.split("BODY:", 1)
                         title_part = parts[0].replace("TITLE:", "").strip()
                         body_part = parts[1].strip()
                         
-                        st.divider()
                         st.header(title_part)
                         st.markdown(body_part)
                     else:
-                        st.divider()
                         st.markdown(clean_text)
                 else:
                     st.error("The model returned an empty response. Please try again.")
