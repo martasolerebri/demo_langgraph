@@ -1,8 +1,10 @@
 import os
 import sys
 import functools
+import re
 from typing import Annotated, Literal, TypedDict
 
+# Configuración de codificación para evitar errores en entornos Windows/Docker
 os.environ["PYTHONUTF8"] = "1"
 os.environ["PYTHONIOENCODING"] = "utf-8"
 if sys.stdout.encoding != 'utf-8':
@@ -17,35 +19,35 @@ from langgraph.graph import END, StateGraph
 from langgraph.graph.message import add_messages
 from langgraph.prebuilt import ToolNode
 
+# --- DEFINICIÓN DEL ESTADO Y AGENTES ---
+
 class AgentState(TypedDict):
     messages: Annotated[list, add_messages]
 
 def create_agent(llm, tools, system_message: str):
-    prompt = ChatPromptTemplate.from_messages(
-        [
-            ("system", "{system_message}"),
-            MessagesPlaceholder(variable_name="messages"),
-        ]
-    )
+    prompt = ChatPromptTemplate.from_messages([
+        ("system", "{system_message}"),
+        MessagesPlaceholder(variable_name="messages"),
+    ])
     prompt = prompt.partial(system_message=system_message)
-    if tools:
-        return prompt | llm.bind_tools(tools)
-    else:
-        return prompt | llm
+    return prompt | llm.bind_tools(tools) if tools else prompt | llm
+
+# --- PROMPTS ---
 
 search_template = """Your job is to search the web for related news that would be relevant to generate the article described by the user.
-NOTE: Do not write the article.
-Use Tavily search if needed, but call tools at most once.
-Then return a plain-text summary of the key findings for the outliner node."""
+Do not write the article. Use Tavily search and return a plain-text summary of the key findings."""
 
-outliner_template = """Your job is to take as input a list of articles from the web along with users instruction on what article they want to write and generate an outline for the article."""
+outliner_template = """Take the search findings and the user's topic to generate a logical outline for a news article."""
 
-writer_template = """Your job is to write an article in ENGLISH. You must do it in this EXACT format, without using markdown (like ** or #) on the labels:
+writer_template = """You are a professional journalist. Write a complete article in ENGLISH based on the outline.
+You MUST use this exact format:
 
 TITLE: <write the title here>
-BODY: <write the full article here>
+BODY: <write the full article here using markdown for subheaders if needed>
 
-NOTE: Do not just copy the outline. You need to write a complete, well-structured article with the info provided by the outline. Always write in ENGLISH."""
+Do not use bolding on the labels TITLE: or BODY:. Always write in ENGLISH."""
+
+# --- NODOS Y LÓGICA DEL GRAFO ---
 
 def agent_node(state, agent, name):
     result = agent.invoke(state)
@@ -60,40 +62,23 @@ def should_search(state) -> Literal["tools", "outliner"]:
 
 def message_text(message) -> str:
     content = getattr(message, "content", "")
-    
     if isinstance(content, str):
-        text = content.strip()
-    elif isinstance(content, list):
-        text_parts = []
-        for item in content:
-            if isinstance(item, dict) and item.get("type") == "text":
-                text_parts.append(str(item.get("text", "")))
-            elif isinstance(item, str):
-                text_parts.append(item)
-        text = "\n".join(part for part in text_parts if part).strip()
-    else:
-        text = str(content).strip()
-
-    text = text.replace("\\n", "\n")
-
-    return text
-
+        return content.strip()
+    if isinstance(content, list):
+        return "\n".join(item.get("text", "") for item in content if isinstance(item, dict) and item.get("type") == "text").strip()
+    return str(content).strip()
 
 @st.cache_resource(show_spinner=False)
 def build_graph(gemini_api_key: str, tavily_api_key: str):
     os.environ["GOOGLE_API_KEY"] = gemini_api_key
     os.environ["TAVILY_API_KEY"] = tavily_api_key
 
-    llm = ChatGoogleGenerativeAI(model="gemini-2.5-flash", google_api_key=gemini_api_key)
+    llm = ChatGoogleGenerativeAI(model="gemini-2.0-flash", google_api_key=gemini_api_key)
     tools = [TavilySearchResults(max_results=5)]
 
-    search_agent = create_agent(llm, tools, search_template)
-    outliner_agent = create_agent(llm, [], outliner_template)
-    writer_agent = create_agent(llm, [], writer_template)
-
-    search_node = functools.partial(agent_node, agent=search_agent, name="Search Agent")
-    outliner_node = functools.partial(agent_node, agent=outliner_agent, name="Outliner Agent")
-    writer_node = functools.partial(agent_node, agent=writer_agent, name="Writer Agent")
+    search_node = functools.partial(agent_node, agent=create_agent(llm, tools, search_template), name="Search")
+    outliner_node = functools.partial(agent_node, agent=create_agent(llm, [], outliner_template), name="Outliner")
+    writer_node = functools.partial(agent_node, agent=create_agent(llm, [], writer_template), name="Writer")
 
     workflow = StateGraph(AgentState)
     workflow.add_node("search", search_node)
@@ -109,6 +94,8 @@ def build_graph(gemini_api_key: str, tavily_api_key: str):
 
     return workflow.compile()
 
+# --- INTERFAZ STREAMLIT ---
+
 def local_css(file_name):
     try:
         with open(file_name) as f:
@@ -118,7 +105,6 @@ def local_css(file_name):
 
 def main():
     st.set_page_config(page_title="AI News Writer", page_icon="📰", layout="centered")
-
     local_css("style.css")
 
     st.title("AI News Writer Agent")
@@ -127,79 +113,64 @@ def main():
         st.header("API Configuration")
         gemini_api_key = st.text_input("Gemini API Key", type="password")
         tavily_api_key = st.text_input("Tavily API Key", type="password")
-        st.markdown("Get your keys at [Google AI Studio](https://aistudio.google.com/) and [Tavily](https://tavily.com/).")
-        
         st.divider()
         if st.button("Reset App", use_container_width=True):
+            st.session_state.clear()
             st.rerun()
 
     if not gemini_api_key.strip() or not tavily_api_key.strip():
-        st.markdown("""
-        This agent is an automated research and writing assistant powered by **LangGraph**. Give it a topic, and it will autonomously search the web, draft an outline, and write a complete, structured news article.
-
-        **How the workflow operates:**
-
-        * **Search Node:** Uses Tavily to scour the web for the latest, most relevant news on your topic.
-
-        * **Outliner Node:** Processes the search results to create a well-structured article outline.
-
-        * **Writer Node:** Drafts the final, full-length article based on the outline.
-
-        **To get started:**
-
-        Please enter both your **Gemini** and **Tavily API Keys** in the sidebar.
-        """)
+        st.info("Please enter your API Keys in the sidebar to start.")
+        st.stop()
     
-    else:
-        
-        st.markdown("This agent searches the web, creates an outline, and writes a complete news article in English.")
-        user_prompt = st.text_area(
-            "What should the article be about?", 
-            placeholder="e.g., The latest trends in Artificial Intelligence in 2026...",
-            height=150
-        )
+    user_prompt = st.text_area(
+        "What should the article be about?", 
+        placeholder="e.g., The impact of renewable energy in 2026...",
+        height=150
+    )
 
-        if st.button("Generate Article", type="primary"):
-            if not user_prompt.strip():
-                st.warning("Please enter a topic for the article.")
-                return
+    if st.button("Generate Article", type="primary"):
+        if not user_prompt.strip():
+            st.warning("Please enter a topic.")
+            return
 
-            try:
-                with st.spinner("Researching and writing (this may take a few seconds)..."):
-                    graph = build_graph(gemini_api_key.strip(), tavily_api_key.strip())
-                    result = graph.invoke(
-                        {"messages": [HumanMessage(content=user_prompt.strip())]},
-                        config={"recursion_limit": 50},
-                    )
+        try:
+            with st.spinner("Searching and writing..."):
+                graph = build_graph(gemini_api_key.strip(), tavily_api_key.strip())
+                result = graph.invoke(
+                    {"messages": [HumanMessage(content=user_prompt.strip())]},
+                    config={"recursion_limit": 50},
+                )
 
-                messages = result.get("messages", [])
-                output_text = ""
+            # Buscar el último mensaje del Writer que contenga la estructura esperada
+            output_text = ""
+            for msg in reversed(result.get("messages", [])):
+                text = message_text(msg)
+                if "TITLE:" in text.upper() or "BODY:" in text.upper():
+                    output_text = text
+                    break
+
+            if output_text:
+                st.divider()
                 
-                for msg in reversed(messages):
-                    output_text = message_text(msg)
-                    if output_text and ("TITLE" in output_text.upper() or "BODY" in output_text.upper()):
-                        break
+                # Procesamiento robusto del Título y Cuerpo
+                # Usamos regex para ignorar mayúsculas/minúsculas y asteriscos de markdown
+                title_match = re.search(r'(?i)TITLE:\s*(.*)', output_text)
+                body_match = re.search(r'(?i)BODY:\s*([\s\S]*)', output_text)
 
-                if output_text:
-                    clean_text = output_text.replace("**TITLE:**", "TITLE:").replace("**TITLE**:", "TITLE:")
-                    clean_text = clean_text.replace("**BODY:**", "BODY:").replace("**BODY**:", "BODY:")
+                if title_match and body_match:
+                    title_content = title_match.group(1).split('\n')[0].replace('**', '').strip()
+                    body_content = body_match.group(1).strip()
                     
-                    st.divider() 
-                    
-                    if "BODY:" in clean_text:
-                        parts = clean_text.split("BODY:", 1)
-                        title_part = parts[0].replace("TITLE:", "").strip()
-                        body_part = parts[1].strip()
-                        
-                        st.header(title_part)
-                        st.markdown(body_part)
-                    else:
-                        st.markdown(clean_text)
+                    st.markdown(f"# {title_content}")
+                    st.markdown(body_content)
                 else:
-                    st.error("The model returned an empty response. Please try again.")
-                        
-            except Exception as exc:
-                st.error(f"An error occurred: {exc}")
+                    # Fallback si el regex falla pero hay texto
+                    st.markdown(output_text)
+            else:
+                st.error("Could not extract article. Try a different prompt.")
+                    
+        except Exception as exc:
+            st.error(f"Error: {exc}")
 
 if __name__ == "__main__":
     main()
