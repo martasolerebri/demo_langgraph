@@ -193,7 +193,7 @@ def main():
                         st.header(title_part)
                         st.markdown(body_part)
                     else:
-                        st.divier()
+                        st.divider()
                         st.markdown(clean_text)
                 else:
                     st.error("The model returned an empty response. Please try again.")
