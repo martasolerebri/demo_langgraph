@@ -139,10 +139,9 @@ def main():
                     output_text = text
                     break
 
-            # ... (código anterior igual hasta la parte del procesamiento del artículo)
-
             if output_text:
                 st.divider()
+
                 title_match = re.search(r'(?i)TITLE:\s*(.*)', output_text)
                 body_match = re.search(r'(?i)BODY:\s*([\s\S]*)', output_text)
 
@@ -152,25 +151,13 @@ def main():
                     
                     st.markdown(f"# {title_content}")
                     st.markdown(body_content)
-                    
-                    # Espaciador sutil antes del botón para evitar la "barra" de pegado
-                    st.write("") 
-                    
-                    # Usamos una columna para que el botón no ocupe todo el ancho si no quieres
-                    st.download_button(
-                        label="📥 Download Article",
-                        data=f"{title_content}\n\n{body_content}",
-                        file_name="article.txt",
-                        mime="text/plain",
-                        use_container_width=True # Esto aplica el estilo de botón grande de tu CSS
-                    )
                 else:
-                    st.markdown(output_text.strip())
-            
-            # Eliminamos cualquier st.write o st.empty adicional aquí que cause la barra final
-            
-        except Exception as e:
-            st.error(f"Error: {e}")
+                    st.markdown(output_text)
+            else:
+                st.error("Could not extract article. Try a different prompt.")
+                    
+        except Exception as exc:
+            st.error(f"Error: {exc}")
 
 if __name__ == "__main__":
     main()
