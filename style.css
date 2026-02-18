@@ -282,3 +282,11 @@ h1, h2, h3 {
 [data-testid="stChatMessage"] {
     animation: slideIn 0.3s ease-out !important;
 }
+
+.stMarkdown:empty {
+    display: none;
+}
+
+.main .block-container {
+    padding-bottom: 2rem;
+}
