@@ -189,9 +189,11 @@ def main():
                         title_part = parts[0].replace("TITLE:", "").strip()
                         body_part = parts[1].strip()
                         
+                        st.divider()
                         st.header(title_part)
                         st.markdown(body_part)
                     else:
+                        st.divier()
                         st.markdown(clean_text)
                 else:
                     st.error("The model returned an empty response. Please try again.")
