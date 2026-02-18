@@ -192,20 +192,10 @@ def main():
                         st.header(title_part)
                         st.markdown(body_part)
                         
-                        texto_para_descargar = f"{title_part}\n\n{body_part}"
                     else:
                         st.markdown(clean_text)
-                        texto_para_descargar = clean_text
                     
                     st.write("")
-                    
-                    st.download_button(
-                        label="Download",
-                        data=texto_para_descargar,
-                        file_name="generated_article.txt",
-                        mime="text/plain",
-                        type="primary"
-                    )
 
                 else:
                     st.error("The model returned an empty response. Please try again.")
