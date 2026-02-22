@@ -142,9 +142,7 @@ def main():
         **How the workflow operates:**
 
         * **Search Node:** Uses Tavily to scour the web for the latest, most relevant news on your topic.
-
         * **Outliner Node:** Processes the search results to create a well-structured article outline.
-
         * **Writer Node:** Drafts the final, full-length article based on the outline.
 
         **To get started:**
